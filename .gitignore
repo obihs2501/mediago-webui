@@ -11,7 +11,6 @@ downloads/
 *.dll
 *.so
 *.dylib
-go.sum
 
 # 操作系统
 .DS_Store

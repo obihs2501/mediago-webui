@@ -12,23 +12,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-            ext: ''
-          - os: windows-latest
-            goos: windows
-            goarch: amd64
-            ext: '.exe'
-          - os: macos-latest
-            goos: darwin
-            goarch: amd64
-            ext: ''
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
@@ -41,16 +25,16 @@ jobs:
 
     - name: Build
       run: |
-        go build -o mediago-webui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} server/main.go
+        go build -o mediago-webui-windows-amd64.exe server/main.go
       env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
+        GOOS: windows
+        GOARCH: amd64
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: mediago-webui-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: mediago-webui-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+        name: mediago-webui-windows-amd64
+        path: mediago-webui-windows-amd64.exe
 
   release:
     name: Create Release
@@ -69,9 +53,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          mediago-webui-linux-amd64/mediago-webui-linux-amd64
           mediago-webui-windows-amd64/mediago-webui-windows-amd64.exe
-          mediago-webui-darwin-amd64/mediago-webui-darwin-amd64
         draft: false
         prerelease: false
       env:
