@@ -33,7 +33,7 @@ jobs:
 
     - name: Build
       run: |
-        go build -ldflags="-s -w -H windowsgui" -o mediago.exe ./cmd/mediago
+        go build -ldflags="-s -w" -o mediago.exe ./cmd/mediago
       env:
         CGO_ENABLED: 1
         GOOS: windows
