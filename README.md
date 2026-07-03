@@ -46,11 +46,19 @@ mediago.exe https://www.bilibili.com/video/BV1xxx
 
 ### 下载预编译版本（推荐）
 
-从 [Releases](https://github.com/obihs2501/mediago-webui/releases) 下载 Windows 版本：
+从 [Releases](https://github.com/obihs2501/mediago-webui/releases) 下载 Windows 版本。
 
-- **Windows**: `mediago-windows-amd64.zip`
+提供两个 exe 文件：
 
-解压后双击即用！
+1. **mediago-gui.exe** - 纯 GUI 模式（推荐）
+   - 双击打开，无控制台窗口
+   - 界面干净
+   - 适合日常使用
+
+2. **mediago.exe** - CLI + GUI 双模式
+   - 支持命令行使用
+   - 双击打开会显示控制台
+   - 适合调试和批量操作
 
 > 注意：目前仅提供 Windows 版本。macOS 和 Linux 用户请使用原 [MediaGo](https://github.com/Sophomoresty/mediago) CLI 版本。
 
@@ -65,37 +73,46 @@ mediago.exe https://www.bilibili.com/video/BV1xxx
 
 ## 🎯 使用方法
 
-### GUI 模式（双击启动）
+### GUI 模式（推荐）
 
-1. **双击** `mediago.exe`
-2. **填写表单**：
-   - 视频链接
-   - 画质选择（可选）
-   - Cookies 文件（付费内容需要）
-   - 代理地址（可选）
-3. **点击下载**
-4. **查看结果** - 实时显示在窗口中
+**方式一：纯 GUI（无控制台）**
+```
+双击 mediago-gui.exe
+→ 打开桌面窗口
+→ 填写表单
+→ 开始下载
+```
+
+**方式二：带控制台（可看日志）**
+```
+双击 mediago.exe
+→ 打开 GUI 窗口 + 控制台
+→ 可以看到详细的下载日志
+→ 适合调试
+```
 
 ### CLI 模式（命令行）
 
+仅 `mediago.exe` 支持：
+
 ```bash
 # 下载视频
-mediago https://www.bilibili.com/video/BV1GJ411x7h7
+mediago.exe https://www.bilibili.com/video/BV1GJ411x7h7
 
 # 使用 Cookies（付费内容）
-mediago --cookies cookies.txt URL
+mediago.exe --cookies cookies.txt URL
 
 # 选择画质
-mediago -f 1080p URL
+mediago.exe -f 1080p URL
 
 # 列出可用格式
-mediago -F URL
+mediago.exe -F URL
 
 # 下载整个课程/播放列表
-mediago --yes-playlist URL
+mediago.exe --yes-playlist URL
 
 # 使用代理
-mediago --proxy socks5://127.0.0.1:1080 URL
+mediago.exe --proxy socks5://127.0.0.1:1080 URL
 ```
 
 完整命令参数见原 [MediaGo 文档](https://github.com/Sophomoresty/mediago)

@@ -31,7 +31,7 @@ jobs:
         go mod download
         go mod tidy
 
-    - name: Build
+    - name: Build CLI version (with console)
       run: |
         go build -ldflags="-s -w" -o mediago.exe ./cmd/mediago
       env:
@@ -39,11 +39,21 @@ jobs:
         GOOS: windows
         GOARCH: amd64
 
-    - name: Upload artifact
+    - name: Build GUI version (no console)
+      run: |
+        go build -ldflags="-s -w -H windowsgui" -o mediago-gui.exe ./cmd/mediago
+      env:
+        CGO_ENABLED: 1
+        GOOS: windows
+        GOARCH: amd64
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: mediago-windows-amd64
-        path: mediago.exe
+        path: |
+          mediago.exe
+          mediago-gui.exe
 
   release:
     name: Create Release
@@ -58,16 +68,12 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v4
 
-    - name: Package Windows artifact
-      run: |
-        cd mediago-windows-amd64
-        zip ../mediago-windows-amd64.zip mediago.exe
-        cd ..
-
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: mediago-windows-amd64.zip
+        files: |
+          mediago-windows-amd64/mediago.exe
+          mediago-windows-amd64/mediago-gui.exe
         draft: false
         prerelease: false
         body: |
@@ -77,32 +83,38 @@ jobs:
 
           ### 📥 下载
 
-          - **Windows**: `mediago-windows-amd64.zip`
+          直接下载 exe 文件：
 
-          ### ✨ 使用方法
+          1. **mediago.exe** - CLI + GUI 双模式（带控制台）
+             - 命令行使用：`mediago.exe [URL]`
+             - 双击打开：GUI 窗口 + 控制台（可看调试信息）
 
-          **GUI 模式** - 双击 `mediago.exe` 打开桌面窗口
+          2. **mediago-gui.exe** - 纯 GUI 模式（无控制台）
+             - 仅支持双击打开 GUI
+             - 无控制台窗口，更干净
+             - 不支持命令行使用
 
-          **CLI 模式** - 命令行使用：
-          ```bash
-          mediago.exe https://www.bilibili.com/video/xxx
-          ```
+          ### ✨ 推荐
+
+          - **日常使用**：下载 `mediago-gui.exe`
+          - **调试/批量**：下载 `mediago.exe`
 
           ### ⚠️ 依赖
 
           需要安装 **ffmpeg** 才能正常下载视频
           - 下载：https://www.gyan.dev/ffmpeg/builds/
-          - 将 `ffmpeg.exe` 放在与 `mediago.exe` 同目录
+          - 将 `ffmpeg.exe` 放在与程序同目录
+
+          ### 🎯 GUI 功能
+
+          - ✅ 累积下载日志（不清除历史）
+          - ✅ 时间戳和状态图标
+          - ✅ 自动滚动到最新日志
+          - ✅ 支持格式选择、Cookies、代理
+          - ✅ 92 个中文视频平台
 
           ### 📖 文档
 
           查看 [README](https://github.com/obihs2501/mediago-webui) 了解更多
-
-          ### 🌐 支持平台
-
-          92 个中文视频/课程平台：
-          - Bilibili, Douyin, 抖音
-          - iCourse163, Xuetang, Chaoxing
-          - 更多平台运行 `mediago.exe --list-extractors` 查看
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
