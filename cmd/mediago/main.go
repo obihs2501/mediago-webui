@@ -235,8 +235,9 @@ func runGUI() {
 	output.SetPlaceHolder("下载结果将显示在这里...")
 	output.Disable()
 
-	// Download button
-	downloadBtn := widget.NewButton("开始下载", func() {
+	// Download button (declare variable first)
+	var downloadBtn *widget.Button
+	downloadBtn = widget.NewButton("开始下载", func() {
 		url := urlEntry.Text
 		if url == "" {
 			output.SetText("错误：请输入视频链接")
