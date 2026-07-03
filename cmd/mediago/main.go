@@ -258,16 +258,22 @@ func runGUI() {
 		formatSpec = format
 		cookieFile = cookiesEntry.Text
 		proxy = proxyEntry.Text
+		outputTemplate = "%(title)s.%(ext)s"
+		noProgress = false
 
-		output.SetText("正在下载，请稍候...\n")
+		output.SetText("正在提取视频信息...\n")
+		downloadBtn.Disable()
 
 		// Download in background
 		go func() {
+			defer downloadBtn.Enable()
+
 			err := processURL(context.Background(), url)
 			if err != nil {
-				output.SetText(fmt.Sprintf("下载失败：%v", err))
+				output.SetText(fmt.Sprintf("❌ 下载失败：%v\n\n请检查：\n1. 网络连接\n2. 链接是否有效\n3. 是否需要 Cookies", err))
 			} else {
-				output.SetText("下载完成！")
+				dir, _ := os.Getwd()
+				output.SetText(fmt.Sprintf("✅ 下载完成！\n\n文件保存在：\n%s", dir))
 			}
 		}()
 	})
