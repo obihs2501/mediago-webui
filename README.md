@@ -46,13 +46,13 @@ mediago.exe https://www.bilibili.com/video/BV1xxx
 
 ### 下载预编译版本（推荐）
 
-从 [Releases](https://github.com/obihs2501/mediago-webui/releases) 下载适合您系统的版本：
+从 [Releases](https://github.com/obihs2501/mediago-webui/releases) 下载 Windows 版本：
 
 - **Windows**: `mediago-windows-amd64.zip`
-- **macOS**: `mediago-darwin-amd64.tar.gz` (Intel) / `mediago-darwin-arm64.tar.gz` (Apple Silicon)
-- **Linux**: `mediago-linux-amd64.tar.gz`
 
 解压后双击即用！
+
+> 注意：目前仅提供 Windows 版本。macOS 和 Linux 用户请使用原 [MediaGo](https://github.com/Sophomoresty/mediago) CLI 版本。
 
 ### 必需依赖
 
@@ -111,13 +111,19 @@ mediago --proxy socks5://127.0.0.1:1080 URL
 
 ### 为什么选择 Fyne？
 
-| 特性 | Fyne | Wails | Electron |
-|------|------|-------|----------|
-| 编译复杂度 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| 体积 | 15-20MB | 20-30MB | 100-150MB |
-| 原生外观 | ✅ | ✅ | ❌ |
-| 跨平台 | ✅ | ✅ | ✅ |
-| 纯 Go | ✅ | ✅ | ❌ |
+| 特性 | Fyne | 
+|------|------|
+| 编译复杂度 | ⭐⭐⭐⭐⭐ |
+| Windows 体积 | 15-20MB |
+| 原生外观 | ✅ |
+| 跨平台 | ✅ (目前仅 Windows) |
+| 纯 Go | ✅ |
+
+> **为什么只有 Windows 版本？**
+> 
+> Fyne 需要 CGO 编译，在 GitHub Actions 上跨平台编译较复杂。目前专注于 Windows 用户体验。
+> 
+> macOS/Linux 用户推荐使用原 [MediaGo CLI](https://github.com/Sophomoresty/mediago)。
 
 ---
 
