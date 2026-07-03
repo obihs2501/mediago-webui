@@ -1,0 +1,131 @@
+name: Build Desktop GUI
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            output: mediago.exe
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            output: mediago
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            output: mediago
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev xorg-dev
+
+    - name: Build
+      run: |
+        go build -ldflags="-s -w" -o ${{ matrix.output }} ./cmd/mediago
+      env:
+        CGO_ENABLED: 1
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mediago-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: ${{ matrix.output }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Package artifacts
+      run: |
+        # Windows
+        cd mediago-windows-amd64
+        zip ../mediago-windows-amd64.zip mediago.exe
+        cd ..
+
+        # Linux
+        cd mediago-linux-amd64
+        tar czf ../mediago-linux-amd64.tar.gz mediago
+        cd ..
+
+        # macOS
+        cd mediago-darwin-amd64
+        tar czf ../mediago-darwin-amd64.tar.gz mediago
+        cd ..
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          mediago-windows-amd64.zip
+          mediago-linux-amd64.tar.gz
+          mediago-darwin-amd64.tar.gz
+        draft: false
+        prerelease: false
+        body: |
+          # MediaGo Desktop GUI v${{ github.ref_name }}
+
+          ## 🎉 新版本发布
+
+          ### 📥 下载
+
+          - **Windows**: `mediago-windows-amd64.zip`
+          - **Linux**: `mediago-linux-amd64.tar.gz`
+          - **macOS**: `mediago-darwin-amd64.tar.gz`
+
+          ### ✨ 使用方法
+
+          **GUI 模式** - 双击 `mediago.exe` 打开桌面窗口
+
+          **CLI 模式** - 命令行使用：
+          ```bash
+          mediago https://www.bilibili.com/video/xxx
+          ```
+
+          ### ⚠️ 依赖
+
+          需要安装 **ffmpeg** 才能正常下载视频
+
+          ### 📖 文档
+
+          查看 [README](https://github.com/obihs2501/mediago-webui) 了解更多
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
