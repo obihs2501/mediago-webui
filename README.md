@@ -27,20 +27,35 @@
 
 **Windows**: `mediago-webui.exe`
 
+### ⚠️ 必需组件
+
+**MediaGo WebUI 需要三个文件才能工作**：
+
+1. **mediago-webui.exe** - 本项目的桌面应用
+2. **mediago.exe** - 核心下载器 ([下载](https://github.com/Sophomoresty/mediago/releases))
+3. **ffmpeg.exe** - 视频处理工具 ([下载](https://www.gyan.dev/ffmpeg/builds/)) ⭐ **必需**
+
+**为什么需要 FFmpeg?**  
+Bilibili 等平台使用 DASH 流格式，必须用 FFmpeg 合并音视频，否则会报错：`ffmpeg required for DASH streams`
+
+### 推荐的文件结构
+
+```
+你的文件夹/
+├── mediago-webui.exe    # 桌面应用（本项目）
+├── mediago.exe          # 核心下载器
+├── ffmpeg.exe           # 视频处理（必需！）
+└── downloads/           # 下载目录（自动创建）
+```
+
 ### 使用步骤
 
-1. **下载** `mediago-webui.exe`
-2. **确保** `mediago.exe` 在同一目录或 PATH 中
+1. **下载三个 exe 文件**（见上方链接）
+2. **放在同一目录**
 3. **双击运行** `mediago-webui.exe`
 4. **GUI 窗口自动打开**，开始下载！
 
-### ⚠️ 重要：需要 MediaGo 核心程序
-
-确保 `mediago.exe` 在以下位置之一：
-- 与 `mediago-webui.exe` 同一目录 ⭐（推荐）
-- 系统 PATH 中
-
-下载地址：https://github.com/Sophomoresty/mediago/releases
+📖 **详细安装指南**: 查看 [INSTALLATION.md](INSTALLATION.md)
 
 ## 🎯 使用方法
 
