@@ -36,14 +36,26 @@ func writeColoredLine(w *os.File, color, format string, args ...any) {
 }
 
 func infof(format string, args ...any) {
+	msg := fmt.Sprintf("[info] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiGreen, "[info] "+format, args...)
 }
 
 func warnf(format string, args ...any) {
+	msg := fmt.Sprintf("[warn] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiYellow, "[warn] "+format, args...)
 }
 
 func errorf(format string, args ...any) {
+	msg := fmt.Sprintf("[error] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiRed, "[error] "+format, args...)
 }
 
@@ -57,14 +69,26 @@ func interruptedf() {
 }
 
 func downloadf(format string, args ...any) {
+	msg := fmt.Sprintf("[download] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiGreen, "[download] "+format, args...)
 }
 
 func mergerf(format string, args ...any) {
+	msg := fmt.Sprintf("[merge] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiGreen, "[Merger] "+format, args...)
 }
 
 func subtitlef(format string, args ...any) {
+	msg := fmt.Sprintf("[subtitle] "+format, args...)
+	if guiProgressCallback != nil {
+		guiProgressCallback(msg + "\n")
+	}
 	writeColoredLine(os.Stderr, ansiGreen, "[subtitle] "+format, args...)
 }
 

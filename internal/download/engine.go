@@ -29,6 +29,7 @@ type Opts struct {
 	Proxy             string
 	Context           context.Context
 	MergeOutputFormat string
+	ProgressCallback  func(current, total int64, speed float64) // New callback for GUI
 }
 
 type Engine struct {
@@ -301,6 +302,11 @@ func (e *Engine) downloadSegments(urls []string, outPath string, headers map[str
 		bar = progressbar.DefaultBytes(totalSize, filepath.Base(outPath))
 	}
 
+	// Track progress for GUI callback
+	var downloadedBytes int64
+	var progressMutex sync.Mutex
+	startTime := time.Now()
+
 	ctx, cancel := context.WithCancel(e.ctx)
 	defer cancel()
 
@@ -336,8 +342,22 @@ downloadLoop:
 			}
 			info, _ := os.Stat(segPath)
 			if info != nil {
+				segSize := info.Size()
+
+				progressMutex.Lock()
+				downloadedBytes += segSize
+				current := downloadedBytes
+				progressMutex.Unlock()
+
 				if bar != nil {
-					bar.Add64(info.Size())
+					bar.Add64(segSize)
+				}
+
+				// GUI progress callback
+				if e.opts.ProgressCallback != nil {
+					elapsed := time.Since(startTime).Seconds()
+					speed := float64(current) / elapsed / 1024 / 1024 // MB/s
+					e.opts.ProgressCallback(current, totalSize, speed)
 				}
 			}
 		}(i, u)

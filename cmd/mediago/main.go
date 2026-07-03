@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -212,6 +213,14 @@ Similar to yt-dlp but focused on Chinese internet platforms.`,
 	}
 }
 
+// Global GUI progress state
+var (
+	guiProgressCallback func(string)
+	currentVideoTitle   string
+	currentVideoTotal   int64
+	progressMutex       sync.Mutex
+)
+
 func runGUI() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("MediaGo 下载器")
@@ -259,13 +268,19 @@ func runGUI() {
 
 	// Download log accumulator
 	var downloadLog strings.Builder
+	var logMutex sync.Mutex
 
-	// Helper function to append log
+	// Helper function to append log (thread-safe)
 	appendLog := func(msg string) {
+		logMutex.Lock()
+		defer logMutex.Unlock()
 		downloadLog.WriteString(msg)
 		output.SetText(downloadLog.String())
 		outputScroll.ScrollToBottom()
 	}
+
+	// Set global callback
+	guiProgressCallback = appendLog
 
 	// Download button (declare variable first)
 	var downloadBtn *widget.Button
@@ -307,12 +322,15 @@ func runGUI() {
 
 		// Add separator for new download
 		appendLog("════════════════════════════════════════\n")
-		appendLog(fmt.Sprintf("[提取] %s\n", url))
+		appendLog(fmt.Sprintf("[链接] %s\n", url))
 		downloadBtn.Disable()
 
 		// Download in background
 		go func() {
-			defer downloadBtn.Enable()
+			defer func() {
+				downloadBtn.Enable()
+				guiProgressCallback = nil
+			}()
 
 			startTime := time.Now()
 			appendLog(fmt.Sprintf("[开始] %s\n", startTime.Format("15:04:05")))
@@ -358,7 +376,7 @@ func runGUI() {
 	)
 
 	myWindow.SetContent(container.NewPadded(content))
-	myWindow.Resize(fyne.NewSize(640, 600))
+	myWindow.Resize(fyne.NewSize(640, 650))
 	myWindow.ShowAndRun()
 }
 
@@ -506,6 +524,41 @@ func downloadOne(ctx context.Context, info *extractor.MediaInfo) error {
 
 	outFilename := applyTemplate(outputTemplate, info, stream)
 
+	// Set current video info for GUI
+	progressMutex.Lock()
+	currentVideoTitle = info.Title
+	currentVideoTotal = 0
+	progressMutex.Unlock()
+
+	// Create progress callback for GUI
+	var progressCallback func(current, total int64, speed float64)
+	if guiProgressCallback != nil {
+		progressCallback = func(current, total int64, speed float64) {
+			percent := float64(current) / float64(total) * 100
+			currentMB := float64(current) / 1024 / 1024
+			totalMB := float64(total) / 1024 / 1024
+
+			// Calculate remaining time
+			remaining := ""
+			if speed > 0 {
+				remainingBytes := total - current
+				remainingSec := float64(remainingBytes) / (speed * 1024 * 1024)
+				remaining = fmt.Sprintf(" | 剩余: %ds", int(remainingSec))
+			}
+
+			// Build progress bar
+			barWidth := 30
+			filled := int(percent / 100 * float64(barWidth))
+			bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+
+			msg := fmt.Sprintf("[进度] %.1f%% (%.1f MB / %.1f MB)\n", percent, currentMB, totalMB)
+			msg += fmt.Sprintf("[速度] %.2f MB/s%s\n", speed, remaining)
+			msg += fmt.Sprintf("[%s]\n", bar)
+
+			guiProgressCallback(msg)
+		}
+	}
+
 	engine := download.New(download.Opts{
 		Concurrency:       concurrency,
 		OutputDir:         outputDirFromTemplate(outFilename),
@@ -515,6 +568,7 @@ func downloadOne(ctx context.Context, info *extractor.MediaInfo) error {
 		Proxy:             proxy,
 		Context:           ctx,
 		MergeOutputFormat: mergeOutputFmt,
+		ProgressCallback:  progressCallback,
 	})
 
 	info.Title = baseFromTemplate(outFilename)
