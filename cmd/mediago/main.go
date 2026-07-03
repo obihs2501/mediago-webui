@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -230,17 +231,32 @@ func runGUI() {
 	proxyEntry := widget.NewEntry()
 	proxyEntry.SetPlaceHolder("代理地址（可选）")
 
-	// Output display
+	// Output display with RichText for better visibility
 	output := widget.NewMultiLineEntry()
-	output.SetPlaceHolder("下载结果将显示在这里...")
-	output.Disable()
+	output.SetPlaceHolder("下载日志将显示在这里...")
+	output.Wrapping = fyne.TextWrapWord
+
+	// Scroll container for output
+	outputScroll := container.NewScroll(output)
+	outputScroll.SetMinSize(fyne.NewSize(560, 300))
+
+	// Download log accumulator
+	var downloadLog strings.Builder
+
+	// Helper function to append log
+	appendLog := func(msg string) {
+		downloadLog.WriteString(msg)
+		output.SetText(downloadLog.String())
+		// Scroll to bottom
+		outputScroll.ScrollToBottom()
+	}
 
 	// Download button (declare variable first)
 	var downloadBtn *widget.Button
 	downloadBtn = widget.NewButton("开始下载", func() {
 		url := urlEntry.Text
 		if url == "" {
-			output.SetText("错误：请输入视频链接")
+			appendLog("❌ 错误：请输入视频链接\n\n")
 			return
 		}
 
@@ -260,21 +276,36 @@ func runGUI() {
 		cookieFile = cookiesEntry.Text
 		proxy = proxyEntry.Text
 		outputTemplate = "%(title)s.%(ext)s"
-		noProgress = false
+		noProgress = true // Disable console progress bar
 
-		output.SetText("正在提取视频信息...\n")
+		// Add separator for new download
+		appendLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+		appendLog(fmt.Sprintf("🔍 提取信息: %s\n", url))
 		downloadBtn.Disable()
 
 		// Download in background
 		go func() {
 			defer downloadBtn.Enable()
 
+			// Capture download info
+			startTime := fmt.Sprintf("⏰ 开始时间: %s\n", time.Now().Format("15:04:05"))
+			appendLog(startTime)
+
 			err := processURL(context.Background(), url)
+
+			endTime := fmt.Sprintf("⏰ 完成时间: %s\n", time.Now().Format("15:04:05"))
+
 			if err != nil {
-				output.SetText(fmt.Sprintf("❌ 下载失败：%v\n\n请检查：\n1. 网络连接\n2. 链接是否有效\n3. 是否需要 Cookies", err))
+				appendLog(fmt.Sprintf("❌ 下载失败: %v\n", err))
+				appendLog("💡 请检查:\n")
+				appendLog("   1. 网络连接是否正常\n")
+				appendLog("   2. 视频链接是否有效\n")
+				appendLog("   3. 是否需要提供 Cookies\n\n")
 			} else {
 				dir, _ := os.Getwd()
-				output.SetText(fmt.Sprintf("✅ 下载完成！\n\n文件保存在：\n%s", dir))
+				appendLog(endTime)
+				appendLog("✅ 下载成功！\n")
+				appendLog(fmt.Sprintf("📁 保存位置: %s\n\n", dir))
 			}
 		}()
 	})
@@ -293,12 +324,12 @@ func runGUI() {
 		proxyEntry,
 		downloadBtn,
 		widget.NewSeparator(),
-		widget.NewLabel("下载结果:"),
-		output,
+		widget.NewLabel("下载日志:"),
+		outputScroll,
 	)
 
 	myWindow.SetContent(container.NewPadded(content))
-	myWindow.Resize(fyne.NewSize(600, 500))
+	myWindow.Resize(fyne.NewSize(640, 600))
 	myWindow.ShowAndRun()
 }
 
