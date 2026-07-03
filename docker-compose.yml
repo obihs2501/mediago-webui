@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mediago-webui:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./downloads:/app/downloads
+      - ../mediago.exe:/app/mediago.exe:ro
+    environment:
+      - PORT=8080
+    restart: unless-stopped

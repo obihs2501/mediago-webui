@@ -1,0 +1,30 @@
+# 排除编译产物
+mediago-webui
+mediago-webui.exe
+mediago-webui-*
+
+# 下载目录
+downloads/
+
+# Go 相关
+*.exe
+*.dll
+*.so
+*.dylib
+go.sum
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.log
+*.tmp
