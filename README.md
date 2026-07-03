@@ -1,176 +1,241 @@
-# MediaGo WebUI
+# MediaGo WebUI Integration
 
-> 🎯 为 [MediaGo](https://github.com/Sophomoresty/mediago) 下载器构建的桌面应用
+> 🎯 为 [MediaGo](https://github.com/Sophomoresty/mediago) 添加内置 Web 界面的集成方案
 
-[![Build Status](https://github.com/obihs2501/mediago-webui/workflows/Build%20Wails%20App/badge.svg)](https://github.com/obihs2501/mediago-webui/actions)
 [![License](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org/dl/)
+[![MediaGo](https://img.shields.io/badge/MediaGo-v0.2.0+-blue.svg)](https://github.com/Sophomoresty/mediago)
 
-**真正的桌面应用** - 使用 Wails 构建，双击即可打开 GUI 窗口，无需浏览器！
+**一个命令，两种模式** - 为 MediaGo 下载器添加可选的图形界面
 
-![MediaGo WebUI](https://img.shields.io/badge/Platform-Windows-blue)
+![使用方式](https://img.shields.io/badge/命令行-✅-success)
+![WebUI](https://img.shields.io/badge/WebUI-✅-success)
 
-## ✨ 功能特性
+---
 
-- 🖥️ **自动打开浏览器** - 双击启动，自动打开网页界面
-- 🎯 **一键启动** - 双击 `.exe` 文件即可使用
-- 🔄 **实时反馈** - 下载进度即时显示
-- ⚙️ **完整配置** - 支持格式选择、Cookies、代理等
-- 🌐 **92个平台** - 支持所有 MediaGo 支持的中文视频/课程平台
-- 🎨 **精美界面** - 温暖陶土色主题，现代化设计
+## ✨ 特性
 
-## 📥 安装使用
+### 🎯 设计理念
 
-### 下载预编译版本（推荐）
+本项目提供一个**集成方案**，将 Web 界面直接嵌入 MediaGo 可执行文件中：
 
-从 [Releases](https://github.com/obihs2501/mediago-webui/releases) 页面下载：
+- ✅ **单个 exe 文件** - 无需额外文件
+- ✅ **双模式运行** - CLI 和 WebUI 随意切换
+- ✅ **零外部依赖** - Web 界面打包在二进制中
+- ✅ **完全兼容** - 不影响任何原有功能
 
-**Windows**: `mediago-webui.exe`
-
-### ⚠️ 必需组件
-
-**MediaGo WebUI 需要三个文件才能工作**：
-
-1. **mediago-webui.exe** - 本项目的桌面应用
-2. **mediago.exe** - 核心下载器 ([下载](https://github.com/Sophomoresty/mediago/releases))
-3. **ffmpeg.exe** - 视频处理工具 ([下载](https://www.gyan.dev/ffmpeg/builds/)) ⭐ **必需**
-
-**为什么需要 FFmpeg?**  
-Bilibili 等平台使用 DASH 流格式，必须用 FFmpeg 合并音视频，否则会报错：`ffmpeg required for DASH streams`
-
-### 推荐的文件结构
-
-```
-你的文件夹/
-├── mediago-webui.exe    # 桌面应用（本项目）
-├── mediago.exe          # 核心下载器
-├── ffmpeg.exe           # 视频处理（必需！）
-└── downloads/           # 下载目录（自动创建）
-```
-
-### 使用步骤
-
-1. **下载三个 exe 文件**（见上方链接）
-2. **放在同一目录**
-3. **双击运行** `mediago-webui.exe`
-4. **GUI 窗口自动打开**，开始下载！
-
-📖 **详细安装指南**: 查看 [INSTALLATION.md](INSTALLATION.md)
-
-## 🎯 使用方法
-
-1. **启动应用** - 双击 `mediago-webui.exe`
-2. **浏览器自动打开** - 显示网页界面
-3. **配置选项**（可选）：
-   - 选择视频画质
-   - 设置 Cookies（付费内容需要）
-   - 配置代理
-4. **点击下载** - 即时显示下载结果
-5. **文件位置** - 默认保存在 `downloads/` 目录
-
-## 🛠️ 技术栈
-
-- **后端**: Go 1.21+ (标准库 net/http)
-- **前端**: 原生 HTML/CSS/JavaScript
-- **嵌入**: embed.FS - 前端打包在 `.exe` 中
-- **浏览器**: 自动启动系统默认浏览器
-- **设计**: 温暖陶土色调 + 现代布局
-
-## 🔧 从源码构建
-
-### 前置要求
-
-- Go 1.21+
-
-### 构建步骤
+### 🖥️ 使用方式
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/obihs2501/mediago-webui.git
-cd mediago-webui
+# 命令行模式（原功能）
+mediago https://www.bilibili.com/video/BV1xxx
 
-# 2. 构建
-go build -o mediago-webui.exe .
-
-# 3. 运行
-./mediago-webui.exe
+# Web 界面模式（新功能）
+mediago --webui
 ```
 
-### 开发模式
+启动 WebUI 后：
+- ✅ 自动启动 HTTP 服务器（localhost:8080）
+- ✅ 自动打开系统默认浏览器
+- ✅ 显示精美的可视化界面
+- ✅ 支持所有配置选项
+
+---
+
+## 📦 集成方案
+
+### 方式 1：应用补丁到源码（推荐）
+
+#### 需要的文件
+
+1. **修改后的 `main.go`** - 添加 WebUI 功能
+2. **Web 界面文件** - `web/index.html`
+3. **文档** - `WEBUI.md`
+
+#### 集成步骤
 
 ```bash
-go run .
+# 1. Clone MediaGo 源码
+git clone https://github.com/Sophomoresty/mediago.git
+cd mediago
+
+# 2. 下载本项目的集成文件
+# （从本仓库的 integration/ 目录）
+
+# 3. 复制文件到对应位置
+cp integration/main.go cmd/mediago/main.go
+cp -r integration/web cmd/mediago/
+cp integration/WEBUI.md .
+
+# 4. 编译
+go build -o mediago.exe ./cmd/mediago
 ```
 
-## 📦 项目结构
+#### 修改内容总结
 
+```diff
++ import "embed"
++ import "net/http"
+
++ //go:embed web/*
++ var webFiles embed.FS
+
++ --webui flag
++ --webui-port flag
++ runWebUI() function
++ handleDownload() API
++ handleGetSites() API
++ openBrowser() function
 ```
-mediago-webui/
-├── main.go              # Wails 应用入口
-├── mediago.go           # MediaGo 调用逻辑
-├── frontend/
-│   └── dist/
-│       └── index.html   # 内嵌的 Web 界面
-├── wails.json           # Wails 配置
-├── go.mod               # Go 依赖
-└── .github/
-    └── workflows/
-        └── build.yml    # 自动构建配置
-```
 
-## 🚀 GitHub Actions 自动构建
-
-每次推送代码或创建标签时，GitHub Actions 会自动：
-1. 安装 Wails 工具链
-2. 编译 Windows 桌面应用
-3. 上传编译产物
-
-创建 Release：
-```bash
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
+---
 
 ## 🎨 界面预览
 
-- 温暖的奶油色背景（#F7F4EF）
-- 陶土色强调元素（#C4612F）
-- Georgia 衬线标题 + Inter 无衬线正文
-- 圆角卡片 + 柔和阴影
-- 响应式布局
+### 主界面
+- 🌐 温暖的陶土色设计
+- 📝 清晰的表单输入
+- ⚙️ 可展开的高级选项
+- 📊 实时下载反馈
 
-## ❓ 常见问题
+### 功能
+- ✅ 视频链接输入
+- ✅ 画质选择（自动/1080p/720p/480p）
+- ✅ Cookies 文件配置
+- ✅ 代理设置
+- ✅ 下载结果显示
 
-**Q: 启动后没有打开浏览器？**  
-A: 手动访问 http://localhost:8080/web/
+---
 
-**Q: 提示找不到 mediago？**  
-A: 确保 `mediago.exe` 与 `mediago-webui.exe` 在同一目录
+## 🔧 技术细节
 
-**Q: 提示找不到 ffmpeg？**  
-A: 下载 FFmpeg 并放在与 `mediago-webui.exe` 同一目录。详见 [INSTALLATION.md](INSTALLATION.md)
+### 架构
 
-**Q: 下载失败？**  
-A: 
-- 检查链接是否正确
-- 付费内容需要提供 Cookies
-- 部分平台需要代理访问
-- 确保已安装 ffmpeg
+```
+MediaGo (single binary)
+├── CLI Mode (原功能)
+│   └── cobra commands
+└── WebUI Mode (新功能)
+    ├── embed.FS (embedded web files)
+    ├── HTTP Server (localhost:8080)
+    ├── API Endpoints
+    │   ├── POST /api/download
+    │   └── GET /api/sites
+    └── Auto Browser Launch
+```
 
-## 🆚 与原 MediaGo 的区别
+### 技术栈
 
-| 特性 | MediaGo | MediaGo WebUI |
-|------|---------|---------------|
-| 界面 | 命令行 | 浏览器 GUI |
-| 使用方式 | 输入命令 | 点击按钮 |
-| 配置 | 命令参数 | 可视化表单 |
-| 反馈 | 终端输出 | 网页显示 |
-| 启动 | 手动运行 | 自动打开浏览器 |
-| 适合人群 | 开发者 | 所有用户 |
+- **后端**: Go 标准库 `net/http`
+- **嵌入**: Go 1.16+ `embed` 包
+- **前端**: 纯 HTML/CSS/JavaScript
+- **设计**: 响应式布局 + 温暖配色
+
+### 优势
+
+1. **零额外体积** - HTML/CSS/JS 压缩后约 10KB
+2. **完全离线** - 无需网络，本地运行
+3. **跨平台** - Windows/Linux/macOS 通用
+4. **易维护** - 单个 `index.html` 文件
+
+---
+
+## 📖 使用文档
+
+### 命令行选项
+
+```bash
+# 启动 WebUI（默认端口 8080）
+mediago --webui
+
+# 自定义端口
+mediago --webui --webui-port 9000
+
+# 命令行模式（不受影响）
+mediago [原有所有参数]
+```
+
+### API 端点
+
+```
+POST /api/download
+  - url: 视频链接
+  - format: 画质选择
+  - cookies: Cookies 文件路径
+  - proxy: 代理地址
+
+GET /api/sites
+  - 返回支持的 92 个平台列表
+```
+
+---
+
+## 🚀 为什么选择集成方案？
+
+### vs. 独立 WebUI 项目
+
+| 特性 | 本方案（集成） | 独立项目 |
+|------|---------------|----------|
+| 文件数量 | 1 个 exe | 2 个 exe |
+| 配置 | 无需配置 | 需要指定 mediago 路径 |
+| 更新 | 同步更新 | 需分别更新 |
+| 分发 | 单文件分发 | 多文件打包 |
+| 用户体验 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+
+### vs. 完全 GUI 应用（Wails/Electron）
+
+| 特性 | 本方案 | Wails/Electron |
+|------|--------|----------------|
+| 体积 | +10KB | +10-100MB |
+| 编译复杂度 | 简单 | 复杂 |
+| CLI 功能 | 完整保留 | 需额外实现 |
+| 开发难度 | 低 | 中高 |
+
+---
+
+## 📂 项目结构
+
+```
+mediago-webui/
+├── README.md                    # 本文件
+├── integration/                 # 集成文件
+│   ├── main.go                  # 修改后的主程序
+│   ├── web/
+│   │   └── index.html           # Web 界面
+│   └── WEBUI.md                 # 使用文档
+├── docs/
+│   ├── INTEGRATION_GUIDE.md     # 详细集成指南
+│   └── API.md                   # API 文档
+└── LICENSE
+```
+
+---
+
+## 🤝 贡献
+
+### 提交 PR 到原项目
+
+如果您希望将此功能合并到 MediaGo 主项目：
+
+1. Fork [Sophomoresty/mediago](https://github.com/Sophomoresty/mediago)
+2. 应用本项目的集成文件
+3. 测试编译和功能
+4. 创建 Pull Request
+
+### 改进本集成方案
+
+欢迎：
+- 🎨 改进界面设计
+- 🔧 优化代码实现
+- 📖 完善文档说明
+- 🐛 报告问题
+
+---
 
 ## 📄 许可证
 
 与 MediaGo 项目相同，本项目使用 [The Unlicense](LICENSE) 发布到公有领域。
+
+---
 
 ## 🙏 致谢
 
@@ -179,6 +244,25 @@ A:
 
 ---
 
-**立即下载，开始使用！** 🎉
+## 💡 常见问题
 
-访问 [Releases](https://github.com/obihs2501/mediago-webui/releases) 页面下载最新版本。
+### Q: 会影响原有 CLI 功能吗？
+**A**: 不会。所有原有功能完整保留，WebUI 是可选的附加功能。
+
+### Q: 需要手动配置 mediago 路径吗？
+**A**: 不需要。WebUI 直接调用内部函数，无需外部 exe。
+
+### Q: 体积会增加多少？
+**A**: 约 10KB（压缩后的 HTML/CSS/JS）。
+
+### Q: 支持哪些平台？
+**A**: 与 MediaGo 相同，支持所有 92 个中文平台。
+
+### Q: 如何更新？
+**A**: 更新 MediaGo 源码后重新应用集成补丁即可。
+
+---
+
+**立即体验！** 
+
+查看 [集成指南](docs/INTEGRATION_GUIDE.md) 开始使用。
