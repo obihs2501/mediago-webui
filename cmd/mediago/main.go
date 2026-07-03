@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -215,6 +216,11 @@ func runGUI() {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("MediaGo 下载器")
 
+	// Default download directory
+	exePath, _ := os.Executable()
+	exeDir := filepath.Dir(exePath)
+	defaultDownloadDir := filepath.Join(exeDir, "downloads")
+
 	// URL input
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("粘贴视频链接...")
@@ -222,6 +228,17 @@ func runGUI() {
 	// Format selection
 	formatSelect := widget.NewSelect([]string{"自动 (best)", "1080p", "720p", "480p"}, nil)
 	formatSelect.SetSelected("自动 (best)")
+
+	// Download directory
+	downloadDirEntry := widget.NewEntry()
+	downloadDirEntry.SetText(defaultDownloadDir)
+	downloadDirEntry.SetPlaceHolder("下载保存路径")
+
+	// Browse button for directory
+	browseBtn := widget.NewButton("浏览...", func() {
+		// TODO: Add directory picker when available in Fyne
+		// For now, users can manually edit the path
+	})
 
 	// Cookies input
 	cookiesEntry := widget.NewEntry()
@@ -231,7 +248,7 @@ func runGUI() {
 	proxyEntry := widget.NewEntry()
 	proxyEntry.SetPlaceHolder("代理地址（可选）")
 
-	// Output display with RichText for better visibility
+	// Output display
 	output := widget.NewMultiLineEntry()
 	output.SetPlaceHolder("下载日志将显示在这里...")
 	output.Wrapping = fyne.TextWrapWord
@@ -247,7 +264,6 @@ func runGUI() {
 	appendLog := func(msg string) {
 		downloadLog.WriteString(msg)
 		output.SetText(downloadLog.String())
-		// Scroll to bottom
 		outputScroll.ScrollToBottom()
 	}
 
@@ -256,7 +272,18 @@ func runGUI() {
 	downloadBtn = widget.NewButton("开始下载", func() {
 		url := urlEntry.Text
 		if url == "" {
-			appendLog("❌ 错误：请输入视频链接\n\n")
+			appendLog("[错误] 请输入视频链接\n\n")
+			return
+		}
+
+		downloadDir := downloadDirEntry.Text
+		if downloadDir == "" {
+			downloadDir = defaultDownloadDir
+		}
+
+		// Create download directory if not exists
+		if err := os.MkdirAll(downloadDir, 0755); err != nil {
+			appendLog(fmt.Sprintf("[错误] 无法创建下载目录: %v\n\n", err))
 			return
 		}
 
@@ -275,37 +302,37 @@ func runGUI() {
 		formatSpec = format
 		cookieFile = cookiesEntry.Text
 		proxy = proxyEntry.Text
-		outputTemplate = "%(title)s.%(ext)s"
+		outputTemplate = filepath.Join(downloadDir, "%(title)s.%(ext)s")
 		noProgress = true // Disable console progress bar
 
 		// Add separator for new download
-		appendLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-		appendLog(fmt.Sprintf("🔍 提取信息: %s\n", url))
+		appendLog("════════════════════════════════════════\n")
+		appendLog(fmt.Sprintf("[提取] %s\n", url))
 		downloadBtn.Disable()
 
 		// Download in background
 		go func() {
 			defer downloadBtn.Enable()
 
-			// Capture download info
-			startTime := fmt.Sprintf("⏰ 开始时间: %s\n", time.Now().Format("15:04:05"))
-			appendLog(startTime)
+			startTime := time.Now()
+			appendLog(fmt.Sprintf("[开始] %s\n", startTime.Format("15:04:05")))
 
 			err := processURL(context.Background(), url)
 
-			endTime := fmt.Sprintf("⏰ 完成时间: %s\n", time.Now().Format("15:04:05"))
+			endTime := time.Now()
+			duration := endTime.Sub(startTime)
+
+			appendLog(fmt.Sprintf("[完成] %s (耗时: %s)\n", endTime.Format("15:04:05"), duration.Round(time.Second)))
 
 			if err != nil {
-				appendLog(fmt.Sprintf("❌ 下载失败: %v\n", err))
-				appendLog("💡 请检查:\n")
-				appendLog("   1. 网络连接是否正常\n")
-				appendLog("   2. 视频链接是否有效\n")
-				appendLog("   3. 是否需要提供 Cookies\n\n")
+				appendLog(fmt.Sprintf("[失败] %v\n", err))
+				appendLog("[提示] 请检查:\n")
+				appendLog("  1. 网络连接是否正常\n")
+				appendLog("  2. 视频链接是否有效\n")
+				appendLog("  3. 是否需要提供 Cookies\n\n")
 			} else {
-				dir, _ := os.Getwd()
-				appendLog(endTime)
-				appendLog("✅ 下载成功！\n")
-				appendLog(fmt.Sprintf("📁 保存位置: %s\n\n", dir))
+				appendLog("[成功] 下载完成\n")
+				appendLog(fmt.Sprintf("[位置] %s\n\n", downloadDir))
 			}
 		}()
 	})
@@ -318,6 +345,8 @@ func runGUI() {
 		urlEntry,
 		widget.NewLabel("画质选择:"),
 		formatSelect,
+		widget.NewLabel("保存路径:"),
+		container.NewBorder(nil, nil, nil, browseBtn, downloadDirEntry),
 		widget.NewLabel("Cookies 文件:"),
 		cookiesEntry,
 		widget.NewLabel("代理:"),
