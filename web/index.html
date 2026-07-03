@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediaGo</title>
+    <title>MediaGo 下载器</title>
     <style>
         :root {
             --cream: #F7F4EF;
@@ -52,7 +52,8 @@
             margin-bottom: 0.5rem;
         }
 
-        header h1::first-letter {
+        header h1 em {
+            font-style: italic;
             color: var(--terracotta);
         }
 
@@ -232,8 +233,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>MediaGo</h1>
-            <p class="subtitle">支持 92 个中文平台的视频下载器</p>
+            <h1><em>Media</em>Go 下载器</h1>
+            <p class="subtitle">支持 92 个中文平台的视频下载工具</p>
         </header>
 
         <main>
@@ -281,7 +282,6 @@
         </main>
     </div>
 
-    <script src="wails/runtime.js"></script>
     <script>
         const form = document.getElementById('downloadForm');
         const output = document.getElementById('output');
@@ -301,11 +301,27 @@
             output.classList.add('show');
             result.innerHTML = '<div class="loading">正在下载，请稍候...</div>';
 
+            const formData = new FormData();
+            formData.append('url', url);
+            formData.append('format', format);
+            formData.append('cookies', cookies);
+            formData.append('proxy', proxy);
+
             try {
-                const response = await window.go.main.App.DownloadVideo(url, format, cookies, proxy);
-                result.innerHTML = `<div class="success">下载完成！</div><pre>${escapeHtml(response)}</pre>`;
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    result.innerHTML = `<div class="success">下载完成！</div><pre>${escapeHtml(text)}</pre>`;
+                } else {
+                    result.innerHTML = `<div class="error">${escapeHtml(text)}</div>`;
+                }
             } catch (error) {
-                result.innerHTML = `<div class="error">下载失败：${escapeHtml(error)}</div>`;
+                result.innerHTML = `<div class="error">请求失败：${escapeHtml(error.message)}</div>`;
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = '开始下载';

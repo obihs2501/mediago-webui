@@ -12,7 +12,7 @@
 
 ## ✨ 功能特性
 
-- 🖥️ **原生桌面窗口** - 不再需要打开浏览器访问 localhost
+- 🖥️ **自动打开浏览器** - 双击启动，自动打开网页界面
 - 🎯 **一键启动** - 双击 `.exe` 文件即可使用
 - 🔄 **实时反馈** - 下载进度即时显示
 - ⚙️ **完整配置** - 支持格式选择、Cookies、代理等
@@ -60,7 +60,7 @@ Bilibili 等平台使用 DASH 流格式，必须用 FFmpeg 合并音视频，否
 ## 🎯 使用方法
 
 1. **启动应用** - 双击 `mediago-webui.exe`
-2. **输入链接** - 粘贴视频 URL
+2. **浏览器自动打开** - 显示网页界面
 3. **配置选项**（可选）：
    - 选择视频画质
    - 设置 Cookies（付费内容需要）
@@ -70,10 +70,10 @@ Bilibili 等平台使用 DASH 流格式，必须用 FFmpeg 合并音视频，否
 
 ## 🛠️ 技术栈
 
-- **框架**: [Wails v2](https://wails.io/) - Go + Web 混合桌面应用
-- **后端**: Go 1.21+
+- **后端**: Go 1.21+ (标准库 net/http)
 - **前端**: 原生 HTML/CSS/JavaScript
-- **窗口**: WebView2（Windows 原生）
+- **嵌入**: embed.FS - 前端打包在 `.exe` 中
+- **浏览器**: 自动启动系统默认浏览器
 - **设计**: 温暖陶土色调 + 现代布局
 
 ## 🔧 从源码构建
@@ -81,8 +81,6 @@ Bilibili 等平台使用 DASH 流格式，必须用 FFmpeg 合并音视频，否
 ### 前置要求
 
 - Go 1.21+
-- Wails CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
-- Windows: WebView2 Runtime（通常系统已安装）
 
 ### 构建步骤
 
@@ -92,16 +90,16 @@ git clone https://github.com/obihs2501/mediago-webui.git
 cd mediago-webui
 
 # 2. 构建
-wails build
+go build -o mediago-webui.exe .
 
 # 3. 运行
-./build/bin/mediago-webui.exe
+./mediago-webui.exe
 ```
 
 ### 开发模式
 
 ```bash
-wails dev
+go run .
 ```
 
 ## 📦 项目结构
@@ -143,29 +141,31 @@ git push origin v1.0.0
 
 ## ❓ 常见问题
 
-**Q: 双击没反应？**  
-A: 检查是否已安装 WebView2 Runtime（Windows 10/11 通常已内置）
+**Q: 启动后没有打开浏览器？**  
+A: 手动访问 http://localhost:8080/web/
 
 **Q: 提示找不到 mediago？**  
 A: 确保 `mediago.exe` 与 `mediago-webui.exe` 在同一目录
+
+**Q: 提示找不到 ffmpeg？**  
+A: 下载 FFmpeg 并放在与 `mediago-webui.exe` 同一目录。详见 [INSTALLATION.md](INSTALLATION.md)
 
 **Q: 下载失败？**  
 A: 
 - 检查链接是否正确
 - 付费内容需要提供 Cookies
 - 部分平台需要代理访问
-
-**Q: 能在 Linux/macOS 上用吗？**  
-A: 当前仅构建 Windows 版本，理论上可以构建其他平台
+- 确保已安装 ffmpeg
 
 ## 🆚 与原 MediaGo 的区别
 
 | 特性 | MediaGo | MediaGo WebUI |
 |------|---------|---------------|
-| 界面 | 命令行 | 桌面 GUI |
+| 界面 | 命令行 | 浏览器 GUI |
 | 使用方式 | 输入命令 | 点击按钮 |
 | 配置 | 命令参数 | 可视化表单 |
-| 反馈 | 终端输出 | 窗口显示 |
+| 反馈 | 终端输出 | 网页显示 |
+| 启动 | 手动运行 | 自动打开浏览器 |
 | 适合人群 | 开发者 | 所有用户 |
 
 ## 📄 许可证
@@ -175,8 +175,7 @@ A: 当前仅构建 Windows 版本，理论上可以构建其他平台
 ## 🙏 致谢
 
 - [MediaGo](https://github.com/Sophomoresty/mediago) - 核心下载引擎
-- [Wails](https://wails.io/) - Go 桌面应用框架
-- [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) - Windows 原生渲染
+- [FFmpeg](https://ffmpeg.org/) - 视频处理工具
 
 ---
 

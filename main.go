@@ -1,74 +1,116 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"log"
-
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"time"
 )
 
-//go:embed all:frontend/dist
-var assets embed.FS
+//go:embed web/*
+var webFiles embed.FS
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
+	// Set up HTTP server
+	mux := http.NewServeMux()
 
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title:  "MediaGo WebUI",
-		Width:  1200,
-		Height: 800,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: &options.RGBA{R: 247, G: 244, B: 239, A: 1},
-		OnStartup:        app.startup,
-		Bind: []interface{}{
-			app,
-		},
-	})
+	// Serve embedded web files
+	mux.Handle("/", http.FileServer(http.FS(webFiles)))
 
-	if err != nil {
-		log.Fatal("Error:", err)
+	// API endpoint for downloading
+	mux.HandleFunc("/api/download", handleDownload)
+
+	// API endpoint for getting supported sites
+	mux.HandleFunc("/api/sites", handleGetSites)
+
+	// Start server
+	port := "8080"
+	addr := fmt.Sprintf("127.0.0.1:%s", port)
+	url := fmt.Sprintf("http://%s/web/", addr)
+
+	// Start server in background
+	go func() {
+		log.Printf("Starting server on %s", addr)
+		if err := http.ListenAndServe(addr, mux); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// Wait a moment for server to start
+	time.Sleep(500 * time.Millisecond)
+
+	// Open browser
+	log.Printf("Opening browser: %s", url)
+	if err := openBrowser(url); err != nil {
+		log.Printf("Failed to open browser: %v", err)
+		log.Printf("Please manually open: %s", url)
+	} else {
+		log.Printf("Browser opened successfully")
 	}
+
+	// Keep server running
+	log.Println("Server is running. Press Ctrl+C to stop.")
+	select {}
 }
 
-// App struct
-type App struct {
-	ctx context.Context
-}
+func handleDownload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
-}
+	url := r.FormValue("url")
+	format := r.FormValue("format")
+	cookies := r.FormValue("cookies")
+	proxy := r.FormValue("proxy")
 
-// startup is called when the app starts
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
-}
-
-// DownloadVideo starts a video download
-func (a *App) DownloadVideo(url string, format string, cookies string, proxy string) (string, error) {
 	if url == "" {
-		return "", fmt.Errorf("URL is required")
+		http.Error(w, "URL is required", http.StatusBadRequest)
+		return
 	}
 
-	// Call mediago binary
 	result, err := executeMediago(url, format, cookies, proxy)
 	if err != nil {
-		return "", err
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error: %v\n\n%s", err, result)
+		return
 	}
 
-	return result, nil
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	fmt.Fprint(w, result)
 }
 
-// GetSupportedSites returns list of supported sites
-func (a *App) GetSupportedSites() (string, error) {
-	return getExtractors()
+func handleGetSites(w http.ResponseWriter, r *http.Request) {
+	sites, err := getExtractors()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	fmt.Fprint(w, sites)
+}
+
+func openBrowser(url string) error {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	default: // linux, freebsd, openbsd, netbsd
+		cmd = exec.Command("xdg-open", url)
+	}
+
+	// Don't wait for the command to finish
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Start()
 }
