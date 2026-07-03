@@ -1,4 +1,5 @@
 # 排除编译产物
+build/
 mediago-webui
 mediago-webui.exe
 mediago-webui-*
@@ -7,10 +8,14 @@ mediago-webui-*
 downloads/
 
 # Go 相关
-*.exe
 *.dll
 *.so
 *.dylib
+
+# Wails
+.wails/
+frontend/node_modules/
+frontend/dist/wails/
 
 # 操作系统
 .DS_Store

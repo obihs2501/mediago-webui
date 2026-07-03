@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build Wails App
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Wails Windows
     runs-on: windows-latest
 
     steps:
@@ -19,22 +19,22 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version: '1.21'
 
-    - name: Build
+    - name: Install Wails
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+    - name: Build Wails App
       run: |
-        go build -o mediago-webui-windows-amd64.exe server/main.go
-      env:
-        GOOS: windows
-        GOARCH: amd64
+        wails build -platform windows/amd64
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: mediago-webui-windows-amd64
-        path: mediago-webui-windows-amd64.exe
+        name: mediago-webui-windows
+        path: build/bin/mediago-webui.exe
 
   release:
     name: Create Release
@@ -46,14 +46,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Download all artifacts
+    - name: Download artifact
       uses: actions/download-artifact@v4
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          mediago-webui-windows-amd64/mediago-webui-windows-amd64.exe
+          mediago-webui-windows/mediago-webui.exe
         draft: false
         prerelease: false
       env:
