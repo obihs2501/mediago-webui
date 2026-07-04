@@ -377,6 +377,7 @@ func runGUI() {
 
 	myWindow.SetContent(container.NewPadded(content))
 	myWindow.Resize(fyne.NewSize(640, 650))
+	myWindow.SetFixedSize(false) // Allow window resizing
 	myWindow.ShowAndRun()
 }
 
