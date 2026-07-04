@@ -639,17 +639,15 @@ func applyTemplate(tmpl string, info *extractor.MediaInfo, stream extractor.Stre
 }
 
 func outputDirFromTemplate(filename string) string {
-	dir := "."
-	if idx := strings.LastIndex(filename, "/"); idx > 0 {
-		dir = filename[:idx]
+	dir := filepath.Dir(filename)
+	if dir == "" || dir == "." {
+		return "."
 	}
 	return dir
 }
 
 func baseFromTemplate(filename string) string {
-	if idx := strings.LastIndex(filename, "/"); idx >= 0 {
-		filename = filename[idx+1:]
-	}
+	filename = filepath.Base(filename)
 	if idx := strings.LastIndex(filename, "."); idx > 0 {
 		filename = filename[:idx]
 	}
