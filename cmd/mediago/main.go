@@ -215,10 +215,11 @@ Similar to yt-dlp but focused on Chinese internet platforms.`,
 
 // Global GUI progress state
 var (
-	guiProgressCallback func(string)
-	currentVideoTitle   string
-	currentVideoTotal   int64
-	progressMutex       sync.Mutex
+	guiProgressCallback         func(string)
+	currentVideoProgressCallback func(string)
+	currentVideoTitle           string
+	currentVideoTotal           int64
+	progressMutex               sync.Mutex
 )
 
 func runGUI() {
@@ -264,7 +265,11 @@ func runGUI() {
 
 	// Scroll container for output
 	outputScroll := container.NewScroll(output)
-	outputScroll.SetMinSize(fyne.NewSize(560, 300))
+	outputScroll.SetMinSize(fyne.NewSize(560, 250))
+
+	// Progress label (separate, updated in-place)
+	progressLabel := widget.NewLabel("")
+	progressLabel.Wrapping = fyne.TextWrapWord
 
 	// Download log accumulator
 	var downloadLog strings.Builder
@@ -277,6 +282,11 @@ func runGUI() {
 		downloadLog.WriteString(msg)
 		output.SetText(downloadLog.String())
 		outputScroll.ScrollToBottom()
+	}
+
+	// Helper function to update progress label (thread-safe)
+	updateProgress := func(msg string) {
+		progressLabel.SetText(msg)
 	}
 
 	// Set global callback
@@ -323,6 +333,7 @@ func runGUI() {
 		// Add separator for new download
 		appendLog("════════════════════════════════════════\n")
 		appendLog(fmt.Sprintf("[链接] %s\n", url))
+		updateProgress("") // Clear progress
 		downloadBtn.Disable()
 
 		// Download in background
@@ -330,10 +341,15 @@ func runGUI() {
 			defer func() {
 				downloadBtn.Enable()
 				guiProgressCallback = nil
+				currentVideoProgressCallback = nil
+				updateProgress("") // Clear progress on finish
 			}()
 
 			startTime := time.Now()
 			appendLog(fmt.Sprintf("[开始] %s\n", startTime.Format("15:04:05")))
+
+			// Set progress callback
+			currentVideoProgressCallback = updateProgress
 
 			err := processURL(context.Background(), url)
 
@@ -371,6 +387,8 @@ func runGUI() {
 		proxyEntry,
 		downloadBtn,
 		widget.NewSeparator(),
+		widget.NewLabel("当前进度:"),
+		progressLabel,
 		widget.NewLabel("下载日志:"),
 		outputScroll,
 	)
@@ -533,7 +551,7 @@ func downloadOne(ctx context.Context, info *extractor.MediaInfo) error {
 
 	// Create progress callback for GUI
 	var progressCallback func(current, total int64, speed float64)
-	if guiProgressCallback != nil {
+	if currentVideoProgressCallback != nil {
 		progressCallback = func(current, total int64, speed float64) {
 			percent := float64(current) / float64(total) * 100
 			currentMB := float64(current) / 1024 / 1024
@@ -554,9 +572,9 @@ func downloadOne(ctx context.Context, info *extractor.MediaInfo) error {
 
 			msg := fmt.Sprintf("[进度] %.1f%% (%.1f MB / %.1f MB)\n", percent, currentMB, totalMB)
 			msg += fmt.Sprintf("[速度] %.2f MB/s%s\n", speed, remaining)
-			msg += fmt.Sprintf("[%s]\n", bar)
+			msg += fmt.Sprintf("[%s]", bar)
 
-			guiProgressCallback(msg)
+			currentVideoProgressCallback(msg)
 		}
 	}
 
