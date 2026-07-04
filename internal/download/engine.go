@@ -247,16 +247,27 @@ func (e *Engine) downloadSingle(url, outPath string, headers map[string]string, 
 		w = io.MultiWriter(f, bar)
 	}
 
-	// For GUI progress callback
+	// For GUI progress callback with throttling
 	if e.opts.ProgressCallback != nil && size > 0 {
 		startTime := time.Now()
+		var lastUpdate time.Time
+		var lastPercent float64
+
 		reader := &progressReader{
 			reader: resp.Body,
 			total:  size,
 			callback: func(current int64) {
-				elapsed := time.Since(startTime).Seconds()
-				speed := float64(current) / elapsed / 1024 / 1024 // MB/s
-				e.opts.ProgressCallback(current, size, speed)
+				now := time.Now()
+				percent := float64(current) / float64(size) * 100
+
+				// Only update if: progress changed by 2% OR 1 second elapsed
+				if percent-lastPercent >= 2.0 || now.Sub(lastUpdate) >= time.Second {
+					elapsed := now.Sub(startTime).Seconds()
+					speed := float64(current) / elapsed / 1024 / 1024 // MB/s
+					e.opts.ProgressCallback(current, size, speed)
+					lastUpdate = now
+					lastPercent = percent
+				}
 			},
 		}
 		_, copyErr := io.Copy(w, reader)
