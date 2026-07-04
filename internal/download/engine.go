@@ -240,23 +240,68 @@ func (e *Engine) downloadSingle(url, outPath string, headers map[string]string, 
 	}
 
 	var w io.Writer = f
+	var bar *progressbar.ProgressBar
+
 	if !e.opts.NoProgress {
-		bar := progressbar.DefaultBytes(size, filepath.Base(outPath))
+		bar = progressbar.DefaultBytes(size, filepath.Base(outPath))
 		w = io.MultiWriter(f, bar)
 	}
-	_, copyErr := io.Copy(w, resp.Body)
-	closeErr := f.Close()
 
-	if copyErr != nil {
-		os.Remove(partPath)
-		return copyErr
-	}
-	if closeErr != nil {
-		os.Remove(partPath)
-		return closeErr
+	// For GUI progress callback
+	if e.opts.ProgressCallback != nil && size > 0 {
+		startTime := time.Now()
+		reader := &progressReader{
+			reader: resp.Body,
+			total:  size,
+			callback: func(current int64) {
+				elapsed := time.Since(startTime).Seconds()
+				speed := float64(current) / elapsed / 1024 / 1024 // MB/s
+				e.opts.ProgressCallback(current, size, speed)
+			},
+		}
+		_, copyErr := io.Copy(w, reader)
+		closeErr := f.Close()
+
+		if copyErr != nil {
+			os.Remove(partPath)
+			return copyErr
+		}
+		if closeErr != nil {
+			os.Remove(partPath)
+			return closeErr
+		}
+	} else {
+		_, copyErr := io.Copy(w, resp.Body)
+		closeErr := f.Close()
+
+		if copyErr != nil {
+			os.Remove(partPath)
+			return copyErr
+		}
+		if closeErr != nil {
+			os.Remove(partPath)
+			return closeErr
+		}
 	}
 
 	return os.Rename(partPath, outPath)
+}
+
+// progressReader wraps io.Reader to track progress
+type progressReader struct {
+	reader   io.Reader
+	total    int64
+	current  int64
+	callback func(int64)
+}
+
+func (pr *progressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	pr.current += int64(n)
+	if pr.callback != nil {
+		pr.callback(pr.current)
+	}
+	return n, err
 }
 
 func writeDataURL(raw, outPath string) error {
