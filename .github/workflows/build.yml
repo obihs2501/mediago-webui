@@ -24,26 +24,32 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: 'stable'
 
-    - name: Download dependencies
-      run: |
-        go mod download
-        go mod tidy
+    - name: Tidy modules
+      run: go mod tidy
+
+    - name: Vet
+      run: go vet -tags desktop,production ./cmd/mediago
+      env:
+        CGO_ENABLED: 0
+
+    - name: Test
+      run: go test -tags desktop,production ./cmd/mediago
+      env:
+        CGO_ENABLED: 0
 
     - name: Build CLI version (with console)
-      run: |
-        go build -ldflags="-s -w" -o mediago.exe ./cmd/mediago
+      run: go build -tags desktop,production -ldflags="-s -w" -o mediago.exe ./cmd/mediago
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GOOS: windows
         GOARCH: amd64
 
     - name: Build GUI version (no console)
-      run: |
-        go build -ldflags="-s -w -H windowsgui" -o mediago-gui.exe ./cmd/mediago
+      run: go build -tags desktop,production -ldflags="-s -w -H windowsgui" -o mediago-gui.exe ./cmd/mediago
       env:
-        CGO_ENABLED: 1
+        CGO_ENABLED: 0
         GOOS: windows
         GOARCH: amd64
 
@@ -77,40 +83,34 @@ jobs:
         draft: false
         prerelease: false
         body: |
-          # MediaGo Desktop GUI v${{ github.ref_name }}
+          # MediaGo Desktop GUI ${{ github.ref_name }}
 
-          ## 🎉 Windows 桌面版发布
+          ## 🎉 Windows 桌面版发布（Wails + WebView2）
+
+          本版本 GUI 由 Fyne 迁移到 **Wails v2**：原生系统窗口，任意拉伸缩放，
+          界面内容自适应并支持滚动，彻底解决旧版窗口无法调小的问题。
 
           ### 📥 下载
 
-          直接下载 exe 文件：
-
-          1. **mediago.exe** - CLI + GUI 双模式（带控制台）
+          1. **mediago-gui.exe** - 纯 GUI 模式（推荐日常使用）
+             - 双击打开，无控制台窗口
+          2. **mediago.exe** - CLI + GUI 双模式
              - 命令行使用：`mediago.exe [URL]`
              - 双击打开：GUI 窗口 + 控制台（可看调试信息）
 
-          2. **mediago-gui.exe** - 纯 GUI 模式（无控制台）
-             - 仅支持双击打开 GUI
-             - 无控制台窗口，更干净
-             - 不支持命令行使用
-
-          ### ✨ 推荐
-
-          - **日常使用**：下载 `mediago-gui.exe`
-          - **调试/批量**：下载 `mediago.exe`
-
           ### ⚠️ 依赖
 
-          需要安装 **ffmpeg** 才能正常下载视频
-          - 下载：https://www.gyan.dev/ffmpeg/builds/
-          - 将 `ffmpeg.exe` 放在与程序同目录
+          - **WebView2 运行时**：Windows 10/11 已内置，无需安装
+          - **ffmpeg**：下载合并视频需要
+            - 下载：https://www.gyan.dev/ffmpeg/builds/
+            - 将 `ffmpeg.exe` 放在与程序同目录
 
           ### 🎯 GUI 功能
 
-          - ✅ 累积下载日志（不清除历史）
-          - ✅ 时间戳和状态图标
-          - ✅ 自动滚动到最新日志
-          - ✅ 支持格式选择、Cookies、代理
+          - ✅ 窗口任意缩放，小窗口下界面自动滚动
+          - ✅ 原生目录选择器
+          - ✅ 实时进度 + 累积下载日志
+          - ✅ 支持画质选择、Cookies、代理、整列表下载
           - ✅ 92 个中文视频平台
 
           ### 📖 文档

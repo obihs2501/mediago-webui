@@ -3,8 +3,8 @@
 > 🎯 MediaGo 的桌面 GUI 版本 - 双击即用，支持 92 个中文平台
 
 [![License](https://img.shields.io/badge/license-Unlicense-green.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/Go-1.21+-blue.svg)](https://golang.org)
-[![Fyne](https://img.shields.io/badge/GUI-Fyne-orange.svg)](https://fyne.io)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-blue.svg)](https://golang.org)
+[![Wails](https://img.shields.io/badge/GUI-Wails_v2-red.svg)](https://wails.io)
 
 **双模式运行** - 双击启动桌面 GUI，命令行使用 CLI 模式
 
@@ -27,11 +27,11 @@ mediago.exe https://www.bilibili.com/video/BV1xxx
 
 ### 🖥️ 桌面 GUI 模式
 
-- ✅ **真正的桌面应用** - 使用 Fyne 原生 GUI
-- ✅ **无需浏览器** - 独立桌面窗口
-- ✅ **简单易用** - 可视化表单输入
+- ✅ **真正的桌面应用** - 基于 Wails v2 + WebView2，原生系统窗口
+- ✅ **窗口任意缩放** - 界面自适应，小窗口下自动滚动
+- ✅ **简单易用** - 可视化表单输入，原生目录选择器
 - ✅ **实时反馈** - 下载进度实时显示
-- ✅ **完整功能** - 支持格式选择、Cookies、代理
+- ✅ **完整功能** - 支持格式选择、Cookies、代理、整列表下载
 
 ### 💻 CLI 模式（保留）
 
